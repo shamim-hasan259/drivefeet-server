@@ -1,4 +1,4 @@
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv").config();
@@ -40,6 +40,19 @@ async function run() {
         status: true,
         message: "all cars fetched successfully",
         cars,
+      });
+    });
+
+    app.get("/cars/:carId", async (req, res) => {
+      const { carId } = req.params;
+      const query = {
+        _id: new ObjectId(carId),
+      };
+      const car = await carsCollection.findOne(query);
+      res.status(200).json({
+        status: true,
+        message: "single car fetched successfully",
+        car,
       });
     });
 
