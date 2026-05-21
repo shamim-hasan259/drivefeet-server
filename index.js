@@ -22,20 +22,55 @@ const client = new MongoClient(uri, {
   },
 });
 
+// const verifyToken = async (req, res, next) => {
+//   const authHeader = req?.headers?.authorization;
+//   if (!authHeader) {
+//     return res.status(401).json({ message: "unauthorize" });
+//   }
+//   const token = authHeader.split(" ")[1];
+//   console.log(token);
+//   try {
+//     const { payload } = await jwtVerify(token, JWKS);
+//     next();
+//   } catch (error) {
+//     console.error("Token validation failed:", error);
+//   }
+// };
+
 const verifyToken = async (req, res, next) => {
-  const authHeader = req?.headers?.authorization;
+  const authHeader = req.headers.authorization;
+  console.log(authHeader);
   if (!authHeader) {
-    return res.status(401).json({ message: "unauthorize" });
+    return res.status(401).json({
+      message: "Unauthorized access",
+    });
   }
+
   const token = authHeader.split(" ")[1];
-  console.log(token);
+
+  if (!token) {
+    return res.status(401).json({
+      message: "No token provided",
+    });
+  }
+
+  console.log("TOKEN:", token);
+
   try {
     const { payload } = await jwtVerify(token, JWKS);
+
+    req.user = payload;
+
     next();
   } catch (error) {
     console.error("Token validation failed:", error);
+
+    return res.status(401).json({
+      message: "Invalid token",
+    });
   }
 };
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -119,7 +154,8 @@ async function run() {
     // booking api
     app.post("/booking", verifyToken, async (req, res) => {
       const { bookingData } = req.body;
-      const result = await carBookingCollection.insertOne(bookingData);
+      const { _id, ...data } = bookingData;
+      const result = await carBookingCollection.insertOne(data);
       console.log(result);
       res
         .status(201)
