@@ -22,21 +22,6 @@ const client = new MongoClient(uri, {
   },
 });
 
-// const verifyToken = async (req, res, next) => {
-//   const authHeader = req?.headers?.authorization;
-//   if (!authHeader) {
-//     return res.status(401).json({ message: "unauthorize" });
-//   }
-//   const token = authHeader.split(" ")[1];
-//   console.log(token);
-//   try {
-//     const { payload } = await jwtVerify(token, JWKS);
-//     next();
-//   } catch (error) {
-//     console.error("Token validation failed:", error);
-//   }
-// };
-
 const verifyToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   console.log(authHeader);
@@ -90,7 +75,6 @@ async function run() {
         data: result,
       });
     });
-
     app.get("/available", async (req, res) => {
       const cars = await carsCollection.find().limit(6).toArray();
       res.status(200).json({
@@ -99,15 +83,85 @@ async function run() {
         cars,
       });
     });
-    app.get("/cars", async (req, res) => {
-      const cars = await carsCollection.find().toArray();
-      res.status(200).json({
-        status: true,
-        message: "all cars fetched successfully",
-        cars,
-      });
-    });
+    // app.get("/cars", async (req, res) => {
+    //   const cars = await carsCollection.find().toArray();
+    //   res.status(200).json({
+    //     status: true,
+    //     message: "all cars fetched successfully",
+    //     cars,
+    //   });
+    // });
 
+    // app.get("/cars", async (req, res) => {
+    //   try {
+    //     // query params
+    //     const search = req.query.search || "";
+    //     const category = req.query.category || "";
+    //     let query = {};
+
+    //     // searching
+    //     if (search) {
+    //       query.carModel = {
+    //         $regex: search,
+    //         $options: "i",
+    //       };
+    //     }
+    //     if (category) {
+    //       query.category = category;
+    //     }
+
+    //     const cars = await carsCollection.find(query).toArray();
+
+    //     res.status(200).json({
+    //       status: true,
+    //       message: "cars fetched successfully",
+    //       cars,
+    //     });
+    //   } catch (error) {
+    //     console.log(error);
+
+    //     res.status(500).json({
+    //       status: false,
+    //       message: "something went wrong",
+    //     });
+    //   }
+    // });
+
+    app.get("/cars", async (req, res) => {
+      try {
+        const search = req.query.search || "";
+        const category = req.query.category || "";
+
+        let query = {};
+
+        // search by car name
+        if (search) {
+          query.carName = {
+            $regex: search,
+            $options: "i",
+          };
+        }
+        // filter by car type
+        if (category) {
+          query.carType = category;
+        }
+
+        const cars = await carsCollection.find(query).toArray();
+
+        res.status(200).json({
+          status: true,
+          message: "cars fetched successfully",
+          cars,
+        });
+      } catch (error) {
+        console.log(error);
+
+        res.status(500).json({
+          status: false,
+          message: "something went wrong",
+        });
+      }
+    });
     app.get("/cars/:carId", verifyToken, async (req, res) => {
       const { carId } = req.params;
       const query = {
