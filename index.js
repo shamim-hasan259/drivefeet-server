@@ -27,27 +27,28 @@ const verifyToken = async (req, res, next) => {
   if (!authHeader) {
     return res.status(401).json({ message: "unauthorize" });
   }
-  const token = authHeader.split(" ")[0];
+  const token = authHeader.split(" ")[1];
+  console.log(token);
   try {
     const { payload } = await jwtVerify(token, JWKS);
     next();
   } catch (error) {
     console.error("Token validation failed:", error);
-    throw error;
   }
 };
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
     // Send a ping to confirm a successful connection
     const db = client.db("car-rental");
     const carsCollection = db.collection("cars");
-    const bookingCollection = db.collection("booking");
+    const carBookingCollection = db.collection("carBooking");
 
     app.post("/cars", verifyToken, async (req, res) => {
       const body = req.body;
-      const result = await carsCollection.insertOne(body);
+      const result = await carsCollection.insertOne({ ...body });
+      console.log(result);
       res.status(201).json({
         status: true,
         message: "car created successfully",
@@ -85,20 +86,53 @@ async function run() {
       });
     });
 
+    app.patch("/cars/:id", verifyToken, async (req, res) => {
+      const { id } = req.params;
+      const body = req.body;
+      const query = {
+        _id: new ObjectId(id),
+      };
+      const updatedCar = {
+        $set: {
+          ...body,
+        },
+      };
+      const result = await carsCollection.updateOne(query, updatedCar);
+      res.status(200).json({
+        message: "update car successfully",
+        status: true,
+        data: result,
+      });
+    });
+
+    app.delete("/cars/:id", verifyToken, async (req, res) => {
+      const { id } = req.params;
+      const query = {
+        _id: new ObjectId(id),
+      };
+      const result = await carsCollection.deleteOne(query);
+      res
+        .status(200)
+        .json({ message: "delete car successfully", data: result });
+    });
+
     // booking api
     app.post("/booking", verifyToken, async (req, res) => {
-      const body = req.body;
-      const result = await bookingCollection.insertOne(body);
-      res.status(201).json({ message: "booking successfully", data: result });
+      const { bookingData } = req.body;
+      const result = await carBookingCollection.insertOne(bookingData);
+      console.log(result);
+      res
+        .status(201)
+        .json({ message: "booking successfully", status: true, data: result });
     });
 
     app.get("/booking", verifyToken, async (req, res) => {
-      const booking = await bookingCollection.find().toArray();
+      const booking = await carBookingCollection.find().toArray();
       res
         .status(200)
         .json({ message: "booking fetched successfully", data: booking });
     });
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
