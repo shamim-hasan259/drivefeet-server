@@ -192,51 +192,16 @@ async function run() {
       });
     });
 
-    // app.delete("/cars/:id", verifyToken, async (req, res) => {
-    //   const { id } = req.params;
-
-    //   const query = {
-    //     _id: new ObjectId(id),
-    //   };
-    //   const result = await carsCollection.deleteOne(query);
-    //   res
-    //     .status(200)
-    //     .json({ message: "delete car successfully", data: result });
-    // });
-
     app.delete("/cars/:id", verifyToken, async (req, res) => {
-      try {
-        const { id } = req.params;
+      const { id } = req.params;
 
-        if (!ObjectId.isValid(id)) {
-          return res.status(400).json({
-            message: "Invalid ID format",
-          });
-        }
-
-        const query = {
-          _id: new ObjectId(id),
-        };
-
-        const existingCar = await carsCollection.findOne(query);
-
-        if (!existingCar) {
-          return res.status(404).json({
-            message: "Car not found",
-          });
-        }
-
-        const result = await carsCollection.deleteOne(query);
-
-        res.status(200).json({
-          message: "Car deleted successfully",
-          data: result,
-        });
-      } catch (error) {
-        res.status(500).json({
-          message: error.message,
-        });
-      }
+      const query = {
+        _id: new ObjectId(id),
+      };
+      const result = await carsCollection.deleteOne(query);
+      res
+        .status(200)
+        .json({ message: "delete car successfully", data: result });
     });
 
     // booking api
