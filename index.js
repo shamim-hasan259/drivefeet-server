@@ -92,41 +92,6 @@ async function run() {
     //   });
     // });
 
-    // app.get("/cars", async (req, res) => {
-    //   try {
-    //     // query params
-    //     const search = req.query.search || "";
-    //     const category = req.query.category || "";
-    //     let query = {};
-
-    //     // searching
-    //     if (search) {
-    //       query.carModel = {
-    //         $regex: search,
-    //         $options: "i",
-    //       };
-    //     }
-    //     if (category) {
-    //       query.category = category;
-    //     }
-
-    //     const cars = await carsCollection.find(query).toArray();
-
-    //     res.status(200).json({
-    //       status: true,
-    //       message: "cars fetched successfully",
-    //       cars,
-    //     });
-    //   } catch (error) {
-    //     console.log(error);
-
-    //     res.status(500).json({
-    //       status: false,
-    //       message: "something went wrong",
-    //     });
-    //   }
-    // });
-
     app.get("/cars", async (req, res) => {
       try {
         const search = req.query.search || "";
@@ -194,11 +159,12 @@ async function run() {
 
     app.delete("/cars/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
-
+      console.log(id);
       const query = {
         _id: new ObjectId(id),
       };
       const result = await carsCollection.deleteOne(query);
+      console.log(result);
       res
         .status(200)
         .json({ message: "delete car successfully", data: result });
