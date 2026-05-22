@@ -43,10 +43,8 @@ const verifyToken = async (req, res, next) => {
 
   try {
     const { payload } = await jwtVerify(token, JWKS);
-
     req.user = payload;
     console.log(req.user);
-
     next();
   } catch (error) {
     console.error("Token validation failed:", error);
@@ -123,8 +121,9 @@ async function run() {
       }
     });
     app.get("/my-added-cars", verifyToken, async (req, res) => {
-      const email = req.body.email;
-      const result = await carsCollection.find({ email: email }).toArray();
+      const result = await carsCollection
+        .find({ userEmail: req.user.email })
+        .toArray();
       res
         .status(200)
         .json({ status: true, message: "fetched all added car", data: result });
