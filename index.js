@@ -24,7 +24,7 @@ const client = new MongoClient(uri, {
 
 const verifyToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
-  console.log(authHeader);
+  // console.log(authHeader);
   if (!authHeader) {
     return res.status(401).json({
       message: "Unauthorized access",
@@ -39,12 +39,13 @@ const verifyToken = async (req, res, next) => {
     });
   }
 
-  console.log("TOKEN:", token);
+  // console.log("TOKEN:", token);
 
   try {
     const { payload } = await jwtVerify(token, JWKS);
 
     req.user = payload;
+    console.log(req.user);
 
     next();
   } catch (error) {
@@ -67,7 +68,12 @@ async function run() {
 
     app.post("/cars", verifyToken, async (req, res) => {
       const body = req.body;
-      const result = await carsCollection.insertOne({ ...body });
+      const email = req.user.email;
+      const newCar = {
+        ...body,
+        userEmail: email,
+      };
+      const result = await carsCollection.insertOne(newCar);
       console.log(result);
       res.status(201).json({
         status: true,
@@ -83,15 +89,6 @@ async function run() {
         cars,
       });
     });
-    // app.get("/cars", async (req, res) => {
-    //   const cars = await carsCollection.find().toArray();
-    //   res.status(200).json({
-    //     status: true,
-    //     message: "all cars fetched successfully",
-    //     cars,
-    //   });
-    // });
-
     app.get("/cars", async (req, res) => {
       try {
         const search = req.query.search || "";
@@ -124,6 +121,13 @@ async function run() {
           message: "something went wrong",
         });
       }
+    });
+    app.get("/my-added-cars", verifyToken, async (req, res) => {
+      const email = req.body.email;
+      const result = await carsCollection.find({ email: email }).toArray();
+      res
+        .status(200)
+        .json({ status: true, message: "fetched all added car", data: result });
     });
     app.get("/cars/:carId", verifyToken, async (req, res) => {
       const { carId } = req.params;
